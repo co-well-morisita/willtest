@@ -4,6 +4,9 @@ jobs:
     docker:
       - image: php:7.0-apache
     working_directory: /home/fajob
+    branches:
+      only:
+        - test
     steps:
       - checkout
       - run:
@@ -35,6 +38,9 @@ jobs:
     docker:
       - image: php:7.0-apache
     working_directory: /home/fajob
+    branches:
+      only:
+        - master
     steps:
       - checkout
       - run:
