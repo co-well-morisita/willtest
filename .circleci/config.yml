@@ -4,9 +4,6 @@ jobs:
     docker:
       - image: php:7.0-apache
     working_directory: /home/fajob
-    branches:
-      only:
-        - test
     steps:
       - checkout
       - run:
@@ -32,15 +29,10 @@ jobs:
           command: |
             aws deploy create-deployment --application-nam faj_fajbob --deployment-group-name admin-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=admin.zip --region ap-northeast-1
             aws deploy create-deployment --application-name faj_fajbob --deployment-group-name www-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=www.zip --region ap-northeast-1
-version: 2
-jobs:
   build-prd:
     docker:
       - image: php:7.0-apache
     working_directory: /home/fajob
-    branches:
-      only:
-        - master
     steps:
       - checkout
       - run:
@@ -66,7 +58,6 @@ jobs:
           command: |
             aws deploy create-deployment --application-nam faj_fajbob --deployment-group-name prd-admin-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=admin.zip --region ap-northeast-1
             aws deploy create-deployment --application-name faj_fajbob --deployment-group-name prd-www-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=www.zip --region ap-northeast-1
-
 workflows:
   version: 2
   build-test-and-approval-deploy:
