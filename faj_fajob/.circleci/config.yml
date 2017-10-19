@@ -1,0 +1,81 @@
+version: 2
+jobs:
+  build-devs:
+    docker:
+      - image: php:7.0-apache
+    working_directory: /home/fajob
+    steps:
+      - checkout
+      - run:
+          name: Install System Packages
+          command: |
+            apt-get update && apt-get -y install zip
+            apt-get --quiet install --yes python-pip
+            pip install -U pip
+            pip install awscli
+      - run:
+          name: zip code
+          command: |
+            cd admin && zip -r admin.zip .
+            cd ../www && zip -r www.zip .
+      - run:
+          name: Upload code to S3
+          command: |
+            aws s3 cp admin/admin.zip s3://tst-cd-willgroup/admin.zip
+            aws s3 cp www/www.zip s3://tst-cd-willgroup/www.zip
+          #command: aws s3 sync /home/ubuntu/ s3://tst-cd-willgroup/hoila.zip
+      - deploy:
+          name: Execute CodeDeploy
+          command: |
+            aws deploy create-deployment --application-nam faj_fajbob --deployment-group-name admin-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=admin.zip --region ap-northeast-1
+            aws deploy create-deployment --application-name faj_fajbob --deployment-group-name www-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=www.zip --region ap-northeast-1
+version: 2
+jobs:
+  build-prd:
+    docker:
+      - image: php:7.0-apache
+    working_directory: /home/fajob
+    steps:
+      - checkout
+      - run:
+          name: Install System Packages
+          command: |
+            apt-get update && apt-get -y install zip
+            apt-get --quiet install --yes python-pip
+            pip install -U pip
+            pip install awscli
+      - run:
+          name: zip code
+          command: |
+            cd admin && zip -r admin.zip .
+            cd ../www && zip -r www.zip .
+      - run:
+          name: Upload code to S3
+          command: |
+            aws s3 cp admin/admin.zip s3://tst-cd-willgroup/admin.zip
+            aws s3 cp www/www.zip s3://tst-cd-willgroup/www.zip
+          #command: aws s3 sync /home/ubuntu/ s3://tst-cd-willgroup/hoila.zip
+      - deploy:
+          name: Execute CodeDeploy
+          command: |
+            aws deploy create-deployment --application-nam faj_fajbob --deployment-group-name prd-admin-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=admin.zip --region ap-northeast-1
+            aws deploy create-deployment --application-name faj_fajbob --deployment-group-name prd-www-faj_fajbob --deployment-config-name CodeDeployDefault.AllAtOnce --s3-location bucket=tst-cd-willgroup,bundleType=zip,key=www.zip --region ap-northeast-1
+
+workflows:
+  version: 2
+  build-test-and-approval-deploy:
+    jobs:
+      - build-devs:
+          filters:
+            branches:
+              only: test
+      - hold:
+          type: approval
+          requires:
+            - build-devs
+      - build-prd:
+          requires:
+            - hold
+          filters:
+            branches:
+              only: master
